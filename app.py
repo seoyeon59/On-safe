@@ -10,9 +10,8 @@ import pandas as pd
 import joblib
 from pykalman import KalmanFilter
 from playsound import playsound
-import yt_dlp
 import os
-from urllib.parse import urlparse, parse_qs, quote_plus
+from urllib.parse import quote_plus
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
@@ -306,28 +305,10 @@ def get_camera_url(user_id):
 # ------- IP/유튜브 구분 및 카메라 연결 : 수정 제안-------
 def get_video_capture(url):
     try:
-        if "youtube.com" in url or "youtu.be" in url:
-            print("[INFO] YouTube 영상 URL 추출 중...")
-            ydl_opts = {
-                'format': 'best[ext=mp4]/best',
-                'quiet': True,
-                'no_warnings': True,
-                'nocheckcertificate': True
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
-                video_url = info_dict.get("url")
-                if not video_url:
-                    print("[ERROR] YouTube URL 가져오기 실패")
-                    return None
-                cap = cv2.VideoCapture(video_url)
-                return cap
-        else:
-            print("[INFO] IP 카메라 연결 중...")
-            cap = cv2.VideoCapture(url)
-            return cap
+        # url이 0(숫자)이면 로컬 웹캠, 문자열이면 IP/유튜브 스트림
+        return cv2.VideoCapture(url)
     except Exception as e:
-        print(f"[ERROR] 비디오 캡처 생성 실패: {e}")
+        print(f"❌ VideoCapture 생성 오류: {e}")
         return None
 
 # ------ IP 웹캠 연결 반복 시도 : 수정 제안 -------
@@ -375,106 +356,108 @@ def connect_camera_loop():
             print(f"[ERROR] connect_camera_loop 예외 발생: {e}")
             time.sleep(1)
 
-# ------ 프레임 읽기 스레드 ------
+# ------ 프레임 읽기 및 분석 스레드 ------
 def capture_frames():
     global latest_frame, cap, frame_idx, fps, latest_score, latest_label
     print("[INFO] capture_frames 스레드 시작")
 
-    fail_count = 0
+    last_analysis_time = 0  # 마지막 분석 시간을 기록
 
     while True:
-        if cap is None or not cap.isOpened():
-            frame = np.zeros((480, 640, 3), dtype=np.uint8)
-            time.sleep(0.2)
-            continue
-
         try:
-            # ✅ 안정형: grab을 과도하게 하지 않음
-            # (YouTube는 grab() 반복 시 연결이 끊김)
-            ret, frame = cap.read()
-
-            if not ret or frame is None:
-                fail_count += 1
-                print(f"[WARN] 프레임 읽기 실패 ({fail_count})")
-                if fail_count > 10:
-                    print("[ERROR] 스트림이 끊긴 것으로 판단, 재연결 시도 예정")
-                    cap.release()
-                    cap = None
-                time.sleep(0.1)
+            # 1. 카메라 연결 확인 및 프레임 읽기
+            if cap is None or not cap.isOpened():
+                time.sleep(0.5)
                 continue
-            fail_count = 0
 
-            # 프레임 리사이즈
-            frame = cv2.resize(frame, (640, 480))
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                time.sleep(0.01)
+                continue
 
-            # MediaPipe Pose 처리
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = pose.process(rgb_frame)
-
-            if results.pose_landmarks:
-                row = {'frame': frame_idx}
-                for i, lm in enumerate(results.pose_landmarks.landmark):
-                    row[f'kp{i}_x'] = lm.x
-                    row[f'kp{i}_y'] = lm.y
-                    row[f'kp{i}_z'] = lm.z
-                    row[f'kp{i}_visibility'] = lm.visibility
-
-                df = pd.DataFrame([row])
-                center_df = compute_center_dynamics(df, fps=fps)
-                center_info = center_df.iloc[-1].to_dict()
-
-                keypoints = [f'kp{i}' for i in range(len(results.pose_landmarks.landmark))]
-                df = smooth_with_kalman(df, keypoints)
-                df = centralize_kp(df, pelvis_idx=(23, 24))
-                df = scale_normalize_kp(df, ref_joints=(23, 24))
-
-                row_processed = df.iloc[0].to_dict()
-                calculated = calculate_angles(row_processed, fps=fps)
-                calculated.update(center_info)
-
-                try:
-                    feature_cols = [col for col in calculated.keys() if (
-                        "angle" in col.lower() or
-                        "angular_velocity" in col.lower() or
-                        "angular_acceleration" in col.lower() or
-                        "center" in col.lower()
-                    )]
-
-                    X = pd.DataFrame([[calculated[col] for col in feature_cols]], columns=feature_cols).fillna(0.0)
-                    X = X.reindex(columns=scaler.feature_names_in_, fill_value=0.0)
-
-                    X_scaled = scaler.transform(X)
-                    pred = model.predict_proba(X_scaled)
-                    pred_label = model.predict(X_scaled)
-
-                    score = float(pred[0][1] * 100)
-                    label = int(pred_label[0])
-
-                    calculated["risk_score"] = score
-                    calculated["Label"] = label
-                    latest_score = score
-                    latest_label = "Fall" if label == 1 else "Normal"
-
-                except Exception as e:
-                    print("⚠️ 실시간 예측 오류:", e)
-                    calculated["risk_score"] = 0.0
-                    calculated["Label"] = 0
-
-                # DB 저장
-                save_to_db(calculated)
-
-            # 최신 프레임 저장 (lock으로 보호)
+            # 2. 실시간 영상 송출을 위한 업데이트 (매 프레임 수행)
             with frame_lock:
                 latest_frame = frame.copy()
                 frame_idx += 1
+
+            # 3. [핵심] 1초 간격 분석 로직
+            current_time = time.time()
+            if current_time - last_analysis_time >= 1.0:
+                last_analysis_time = current_time  # 분석 시간 갱신
+
+                # 분석용 프레임 가공
+                analysis_frame = cv2.resize(frame, (640, 480))
+                rgb_frame = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
+                results = pose.process(rgb_frame)
+
+                if results.pose_landmarks:
+                    # 데이터 수집 (Raw Keypoints)
+                    row = {'frame': frame_idx}
+                    for i, lm in enumerate(results.pose_landmarks.landmark):
+                        row[f'kp{i}_x'] = lm.x
+                        row[f'kp{i}_y'] = lm.y
+                        row[f'kp{i}_z'] = lm.z
+                        row[f'kp{i}_visibility'] = lm.visibility
+
+                    # --- 데이터 가공 단계 (기존 로직 유지) ---
+                    df = pd.DataFrame([row])
+
+                    # 1) 중심 이동/속도 계산
+                    center_df = compute_center_dynamics(df, fps=fps)
+                    center_info = center_df.iloc[-1].to_dict()
+
+                    # 2) 칼만 필터 및 정규화
+                    keypoints = [f'kp{i}' for i in range(len(results.pose_landmarks.landmark))]
+                    df = smooth_with_kalman(df, keypoints)
+                    df = centralize_kp(df, pelvis_idx=(23, 24))
+                    df = scale_normalize_kp(df, ref_joints=(23, 24))
+
+                    # 3) 관절 각도 계산
+                    row_processed = df.iloc[0].to_dict()
+                    calculated = calculate_angles(row_processed, fps=fps)
+                    calculated.update(center_info)
+
+                    # 4) AI 예측 (가공된 데이터 기반)
+                    try:
+                        feature_cols = [col for col in calculated.keys() if (
+                                "angle" in col.lower() or
+                                "angular_velocity" in col.lower() or
+                                "angular_acceleration" in col.lower() or
+                                "center" in col.lower()
+                        )]
+
+                        X = pd.DataFrame([[calculated[col] for col in feature_cols]], columns=feature_cols).fillna(0.0)
+                        X = X.reindex(columns=scaler.feature_names_in_, fill_value=0.0)
+
+                        X_scaled = scaler.transform(X)
+                        pred = model.predict_proba(X_scaled)
+                        pred_label = model.predict(X_scaled)
+
+                        score = float(pred[0][1] * 100)
+                        label = int(pred_label[0])
+
+                        # 최종 가공 데이터 완성
+                        calculated["risk_score"] = score
+                        calculated["Label"] = label
+
+                        latest_score = score
+                        latest_label = "Fall" if label == 1 else "Normal"
+
+                    except Exception as e:
+                        print("⚠️ 실시간 예측 오류:", e)
+                        calculated["risk_score"] = 0.0
+                        calculated["Label"] = 0
+
+                    # 5) 가공된 최종 데이터를 DB에 저장 (1초에 한 번)
+                    save_to_db(calculated)
+                    print(f"✅ [1s 분석] 데이터 가공 및 저장 완료 (점수: {latest_score}%)")
 
         except Exception as e:
             print(f"[ERROR] capture_frames 예외 발생: {e}")
             time.sleep(0.2)
 
-        # FPS 제어: 너무 빠르면 CPU 과다, 너무 느리면 딜레이
-        time.sleep(1 / fps if fps > 0 else 1 / 25)
-
+        # 스트리밍 부하 조절 (실제 FPS에 맞춰 대기)
+        time.sleep(1 / fps if fps > 0 else 0.03)
 
 # ------ Flask MJPEG 스트리밍 : 수정 제안 --------
 empty_frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -599,27 +582,6 @@ def index():
 
     if user_id:
         camera_url = get_camera_url(user_id)  # DB에서 가져오기
-        if camera_url:
-            # YouTube URL 확인
-            if "youtube.com" in camera_url or "youtu.be" in camera_url:
-                is_youtube = True
-
-                # embed URL 변환
-                video_id = None
-                if "youtube.com/watch" in camera_url:
-                    query = parse_qs(urlparse(camera_url).query)
-                    video_id = query.get("v", [None])[0]
-                elif "youtu.be" in camera_url:
-                    video_id = camera_url.split("/")[-1]
-                elif "youtube.com/shorts" in camera_url:
-                    video_id = camera_url.split("/")[-1]
-
-                if video_id:
-                    embed_url = f"https://www.youtube.com/embed/{video_id}?autoplay=1"
-                else:
-                    # 영상 ID 못 찾으면 유튜브 처리 취소
-                    is_youtube = False
-                    embed_url = None
 
     return render_template('camera.html',
                            camera_url=camera_url,
@@ -674,6 +636,7 @@ def get_score():
 if __name__ == "__main__":
     threading.Thread(target=connect_camera_loop, daemon=True).start()
     threading.Thread(target=capture_frames, daemon=True).start()
+
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
     # 배표시 변경 사항
     # app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False, threaded=True)

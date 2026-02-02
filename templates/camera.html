@@ -3,52 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>실시간 웹캠</title>
+  <title>실시간 낙상 감지 시스템</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="container">
-    <h1>실시간 낙상 감지 시스템</h1>
+    <h1>🚨 실시간 낙상 감지 시스템</h1>
 
     <div class="main-content">
-      <!-- 왼쪽: 실시간 영상 또는 유튜브 -->
       <div class="video-section">
-        <img id="cameraFeed" src="{{ url_for('video_feed') }}" alt="Camera Feed">
-<!--        {% if camera_url %}-->
-<!--            {% if is_youtube %}-->
-<!--                &lt;!&ndash; 유튜브 영상 &ndash;&gt;-->
-<!--                <iframe width="640" height="360"-->
-<!--                        src="{{ embed_url }}"-->
-<!--                        frameborder="0"-->
-<!--                        allow="autoplay; encrypted-media"-->
-<!--                        allowfullscreen>-->
-<!--                </iframe>-->
-<!--            {% else %}-->
-<!--                &lt;!&ndash; IP 웹캠 &ndash;&gt;-->
-<!--                <img id="cameraFeed" src="{{ url_for('video_feed') }}" alt="Camera Feed">-->
-<!--            {% endif %}-->
-<!--        {% else %}-->
-<!--            <p>카메라 또는 영상 URL이 설정되지 않았습니다.</p>-->
-<!--        {% endif %}-->
+        <div class="video-container">
+          <video id="webcam" autoplay playsinline></video>
+        </div>
+        <div id="status" class="status">카메라 연결 확인 중...</div>
       </div>
 
-      <!-- 오른쪽: 위험 점수 -->
       <div class="score-section">
         <h2>낙상 위험 확률</h2>
         <div class="risk-score" id="riskScore">0%</div>
         <div class="risk-bar">
           <div class="arrow" id="arrow"></div>
         </div>
-
         <button id="btn119">🚨 119 신고</button>
       </div>
     </div>
 
-    <!-- 🚨 팝업 카드 -->
     <div id="popup" class="popup-card">
       <p>119에 신고하시겠습니까?<br>모바일에서는 전화 연결이 됩니다.</p>
-      <button id="confirmBtn">확인</button>
-      <button id="cancelBtn">취소</button>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+        <button id="confirmBtn" style="background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">확인</button>
+        <button id="cancelBtn" style="background:#ccc; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">취소</button>
+      </div>
     </div>
   </div>
 
