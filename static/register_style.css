@@ -4,24 +4,49 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh; /* 높이 유연하게 조절 */
   margin: 0;
+  padding: 40px 0; /* 위아해 여백*/
 }
 
-.register-container {
+.register-container1 {
   background: white;
-  padding: 40px;
+  padding: 60px 40px; /* 약관 화면은 더 넓은 패딩 */
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  width: 700px;
-  text-align: left;
+  width: 100%;
+  max-width: 700px;
+  box-sizing: border-box;
 }
 
-h2 { margin-bottom: 10px; color: #222; }
+.register-container2 {
+  background: white;
+  padding: 30px; /* 폼 화면은 기존의 패딩 유지 */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+}
 
-p { margin-bottom: 25px; color: #666; font-size: 14px; }
+/* 폼 안의 h2와 p는 container1과 별개로 관리되도록 가독성 조절 */
+.register-container2 h2 { margin-top: 0; }
 
-form { display: flex; flex-direction: column; gap: 6px; }
+h2 {
+    margin-bottom: 10px;
+    color: #222;
+}
+
+p {
+    margin-bottom: 25px;
+    color: #666;
+    font-size: 14px;
+}
+
+form {
+    display: flex;
+    flex-direction:
+    column; gap: 10px; }
 
 input {
   padding: 12px;
@@ -45,9 +70,22 @@ button {
   cursor: pointer;
 }
 
-button:hover { background-color: #333; }
-.login { margin-top: 20px; font-size: 13px; color: #555; }
-.login a { color: #007bff; text-decoration: none; font-weight: bold; }
+button:hover {
+    background-color: #333;
+}
+
+.login {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #555;
+}
+
+.login a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
 .error-message {
   font-size: 12px;
   color: red;
@@ -56,17 +94,91 @@ button:hover { background-color: #333; }
   margin-top: -10px;
 }
 
+/* 회원가입 버튼 아래 간격 */
+#registerForm button {
+  width: 100%;
+  padding: 10px;
+}
+
 /* 회원가입 폼 내부 input 간격 조절 */
 #registerForm input {
   display: block;
-  margin-bottom: 6px;
-  padding: 5px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* 회원가입 버튼 아래 간격 */
 #registerForm button {
   width: 100%;
   padding: 10px 0;
+}
+
+/* 개별 박스 디자인 대신 항목별 스타일 */
+.agree-item {
+  padding: 15px 0;
+  border-bottom: 1px solid #eee; /* 항목 사이 구분선 */
+}
+
+.agree-item:last-child {
+  border-bottom: none; /* 마지막 항목은 선 제거 */
+}
+
+.agree-item strong {
+  display: block;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.agree-item p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0; /* 기존 p태그 마진 제거 */
+}
+
+/* 전체 동의 체크박스 영역 */
+.check-label {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9; /* 체크 영역만 강조 */
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.check-label input {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+}
+
+/* 비밀번호 입력창: 하단 마진 제거 */
+#userId, #password {
+  margin-bottom: 0 !important;
+}
+
+/* 비밀번호 권장 문구: 평소에 박스 바로 밑에 밀착 */
+#registerForm small {
+  display: block;
+  color: #888;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+/* 에러 문구 공통 스타일: 평소에는 공간을 아예 차지하지 않음 */
+#userIdError,
+#passwordFormatError,
+#passwordError {
+  display: none;       /* 공간 확보 안 함 */
+  color: red;
+  font-size: 11px;
+  text-align: left;
+}
+
+/* 비밀번호 형식 에러는 small 문구 아래에 나와야 하므로 마진 별도 조절 */
+#passwordFormatError {
+  margin-top: -8px;   /* small 문구 바로 아래 붙음 */
+  margin-bottom: 8px;
 }
