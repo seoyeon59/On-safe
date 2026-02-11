@@ -105,6 +105,7 @@ button:hover {
   display: block;
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: 12px;
 }
 
 #registerForm button {
@@ -144,14 +145,14 @@ button:hover {
   padding: 15px;
   background-color: #f9f9f9; /* 체크 영역만 강조 */
   border-radius: 8px;
-  font-weight: bold;
   cursor: pointer;
+  font-size: 13px
 }
 
 .check-label input {
   margin-right: 10px;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
 }
 
 /* 비밀번호 입력창: 하단 마진 제거 */
@@ -181,4 +182,56 @@ button:hover {
 #passwordFormatError {
   margin-top: -8px;   /* small 문구 바로 아래 붙음 */
   margin-bottom: 8px;
+}
+
+/* 개별 항목 내 '동의합니다' 레이블 */
+.sub-agree-label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  gap: 7px; /* 글자와 체크박스 사이 간격 */
+}
+
+.sub-agree-label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* 약관 헤더 높이 및 정렬 유지 */
+.agree-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.agree-header input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* 다음 단계 버튼 스타일 */
+.next-btn {
+  width: 100%;
+  padding: 15px;
+  background-color: #ccc; /* 초기엔 비활성 느낌의 색상 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: not-allowed;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+/* 모든 동의 완료 시 버튼 스타일 */
+.next-btn.active {
+  background-color: #000;
+  cursor: pointer;
 }

@@ -10,7 +10,7 @@
   <!-- 개인정보 안내 및 동의 영역 -->
   <div class="register-container1" id="privacySection">
       <h2>동의 항목 (필수)</h2>
-      <p>이용 약관에 모두 동의해야 가입 가능합니다.</p>
+      <p>이용 약관에 모두 동의하여야 가입이 가능합니다.</p>
 
       <div class="all-agreements">
         <div class="agree-item">
@@ -21,6 +21,10 @@
             보관 기간: 회원 탈퇴 시까지 <br>
             안내: 제공하신 개인정보는 서비스 이용 외 다른 목적으로 사용되지 않습니다.
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree1">
+            동의합니다
+          </label>
         </div>
 
         <!-- 민감정보/건강 정보 처리 동의 -->
@@ -31,6 +35,10 @@
             수집 항목: 실시간 영상, 관절/움직임 데이터, 낙상 위험 점수 <br>
             안내: 영상과 행동 데이터는 서버에서 안전하게 저장 및 처리되며, 외부로 공개되지 않습니다.
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree2">
+            동의합니다
+          </label>
         </div>
 
         <!-- 영상/데이터 활용 동의 -->
@@ -41,6 +49,10 @@
             내용: 수집된 데이터는 익명화 후 통계적 분석 또는 모델 개선 용도로만 사용됩니다. <br>
             선택권 안내: 동의하지 않아도 기본 서비스 이용에는 제한이 없습니다.
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree3">
+            동의합니다
+          </label>
         </div>
 
         <!-- 제3자 제공 동의 -->
@@ -51,6 +63,10 @@
             제공 목적: 위험 알람 전송, 서비스 개선, 연구 분석 <br>
             안내: 동의하지 않아도 기본 서비스 이용에는 제한이 없습니다.
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree4">
+            동의합니다
+          </label>
         </div>
 
         <!-- 서비스 이용약관 동의 -->
@@ -62,6 +78,10 @@
             2. 서비스 이용 중 발생하는 사고에 대해 회사는 책임을 지지 않음 <br>
             3. 서비스 이용 규칙, 금지 사항 안내
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree5">
+            동의합니다
+          </label>
         </div>
 
         <!-- 앱푸시/마케팅 수신 동의 -->
@@ -71,6 +91,10 @@
             내용: 낙상 위험 알림, 긴급 알림, 이벤트/프로모션 정보 제공 <br>
             선택권 안내: 동의하지 않아도 기본 낙상 위험 알람 서비스 이용에는 제한 없음
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree6">
+            동의합니다
+          </label>
         </div>
 
         <!-- 개인정보 열람/수정/삭제 안내 -->
@@ -82,15 +106,21 @@
             2. 탈퇴 시 개인정보는 안전하게 파기됩니다. <br>
             3. 문의: 고객센터 이메일 또는 전화번호
           </p>
+          <label class="sub-agree-label">
+            <input type="checkbox" class="sub-agree" id="agree7">
+            동의합니다
+          </label>
         </div>
       </div>
 
       <label class="check-label">
         <input type="checkbox" id="agreeAll">
-        모든 내용을 이해했으며, 전체 동의합니다.
+        전체 동의하기
       </label>
+
+      <button type="button" id="nextStepBtn" class="next-btn">다음 단계</button>
       <div id="agreeError" style="display:none; color:red; font-size:12px; margin-top:10px;">
-        모든 약관에 동의해 주세요.
+        모든 필수 약관에 동의하셔야 다음으로 넘어갈 수 있습니다.
       </div>
   </div>
 

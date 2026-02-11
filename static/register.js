@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // --- 동의 관련 요소 ---
   const agreeAll = document.getElementById('agreeAll');
+  const subAgrees = document.querySelectorAll('.sub-agree');
+  const nextStepBtn = document.getElementById('nextStepBtn');
   const agreeError = document.getElementById('agreeError'); // HTML에 이 ID를 가진 div가 없다면 생성 권장
 
   // --- 입력 및 에러 메시지 요소 ---
@@ -20,17 +22,44 @@ document.addEventListener('DOMContentLoaded', function() {
   let isIdTaken = false;
 
   // ------------- 화면 전환: 전체 동의 체크 시 폼 표시 -------------
-  agreeAll.addEventListener('change', () => {
-    if (agreeAll.checked) {
-      // 약관 섹션 숨기기
+  agreeAll.addEventListener('change', function() {
+    subAgrees.forEach(checkbox => {
+      checkbox.checked = agreeAll.checked;
+    });
+    validateAgreements();
+  });
+
+  // ------------- 개별 체크박스 로직 -------------
+  subAgrees.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const allChecked = Array.from(subAgrees).every(cb => cb.checked);
+      agreeAll.checked = allChecked;
+      validateAgreements();
+    });
+  });
+
+  // ------------- 동의 여부 확인 및 버튼 활성화 -------------
+  function validateAgreements() {
+    const allChecked = Array.from(subAgrees).every(cb => cb.checked);
+    if (allChecked) {
+      nextStepBtn.classList.add('active');
+      nextStepBtn.style.cursor = 'pointer';
+      agreeError.style.display = 'none';
+    } else {
+      nextStepBtn.classList.remove('active');
+      nextStepBtn.style.cursor = 'not-allowed';
+    }
+  }
+
+  // ------------- 다음 단계 버튼 클릭 시 화면 전환 -------------
+  nextStepBtn.addEventListener('click', function() {
+    const allChecked = Array.from(subAgrees).every(cb => cb.checked);
+    if (allChecked) {
       privacySection.style.display = 'none';
-
-      // 회원가입 폼 섹션(부모)과 내부 폼 보이기
       registrationSection.style.display = 'block';
-      registerFormDiv.style.display = 'block';
-
-      // 화면 최상단으로 스크롤 이동
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo(0, 0);
+    } else {
+      agreeError.style.display = 'block';
     }
   });
 
