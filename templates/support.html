@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>계정 찾기 선택</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='support_style.css') }}">
+</head>
+<body>
+  <div class="support-container">
+    <h2>계정 지원</h2>
+    <p>도움이 필요한 항목을 선택해 주세요</p>
+
+    <div class="selection-list">
+      <button type="button" class="option-card" onclick="location.href='/find-id'">
+        <div class="info">
+          <strong>아이디 찾기</strong>
+          <span>등록된 이메일로 아이디를 확인합니다.</span>
+        </div>
+        <span class="arrow">></span>
+      </button>
+
+      <button type="button" class="option-card" onclick="location.href='/find-pw'">
+        <div class="info">
+          <strong>비밀번호 찾기</strong>
+          <span>본인 인증 후 비밀번호를 재설정합니다.</span>
+        </div>
+        <span class="arrow">></span>
+      </button>
+
+      <button type="button" class="option-card highlight" onclick="location.href='/register'">
+        <div class="info">
+          <strong>새로운 계정 만들기</strong>
+          <span>아직 계정이 없으시다면 가입해 보세요.</span>
+        </div>
+        <span class="arrow">></span>
+      </button>
+    </div>
+
+    <div class="footer-link">
+      <a href="/">로그인 화면으로 돌아가기</a>
+    </div>
+  </div>
+</body>
+</html>

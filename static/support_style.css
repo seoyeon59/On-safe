@@ -1,0 +1,93 @@
+/* support_style.css */
+body {
+  font-family: 'Apple SD Gothic Neo', sans-serif;
+  background-color: #f5f6fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.support-container {
+  background: white;
+  padding: 45px 35px;
+  border-radius: 15px; /* 로그인 박스와 통일 */
+  box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #222;
+}
+
+p {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 35px;
+}
+
+.selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.option-card:hover {
+  border-color: #000;
+  background-color: #f9f9f9;
+  transform: translateY(-2px);
+}
+
+.option-card .info strong {
+  display: block;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.option-card .info span {
+  font-size: 12px;
+  color: #999;
+}
+
+.option-card .arrow {
+  color: #ccc;
+  font-weight: bold;
+}
+
+/* 회원가입 카드는 살짝 배경색을 다르게 하여 구분 */
+.option-card.highlight {
+  background-color: #fcfcfc;
+}
+
+.footer-link {
+  margin-top: 30px;
+}
+
+.footer-link a {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.footer-link a:hover {
+  text-decoration: underline;
+}

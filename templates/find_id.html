@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아이디 찾기</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='login_style.css') }}">
+</head>
+<body>
+  <div class="login-container">
+    <h2>아이디 찾기</h2>
+    <p>가입 시 등록한 이름과 이메일을 입력하세요.</p>
+    <form>
+      <input type="text" placeholder="이름" required>
+      <input type="email" placeholder="이메일 주소" required>
+      <button type="button" onclick="alert('아이디 찾기 요청됨')">아이디 찾기</button>
+    </form>
+    <div class="login-footer">
+      <a href="/">로그인으로 돌아가기</a>
+    </div>
+  </div>
+</body>
+</html>
