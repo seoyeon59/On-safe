@@ -1,67 +1,35 @@
-from flask import Flask, Response, render_template, request, redirect, session, jsonify
-import random
-import os
+from flask import Flask, render_template, session
+import cv2
 
 app = Flask(__name__)
+app.secret_key = 'test_key'
 
-# 세션을 사용하기 위해 반드시 필요합니다.
-app.secret_key = os.urandom(24)
+# 1. 테스트를 위해 가상의 로그인 세션을 미리 생성 (로그인 생략용)
+@app.before_request
+def make_session():
+    session['user_id'] = 'test_user'
 
-# ==========================
-# Flask 라우팅
-# ==========================
-
-@app.route('/')
-def home():
-    return render_template('login.html')
-
-# ------ 로그인 기능 -------
-@app.route('/login', methods=['POST'])
-def login():
-    user_id = request.form.get('id')
-    password = request.form.get('password')
-
-    # 테스트 용도: 아이디와 비번이 존재하면 로그인 성공으로 간주
-    if user_id and password:
-        session['user_id'] = user_id
-        return redirect('/camera') # 오타 수정 완료
-
-    return render_template('login.html', error_msg="정보를 입력해주세요.")
-
-@app.route('/support')
-def support():
-    return render_template('support.html')
-
-@app.route('/find-id')
-def find_id_page():
-    # 아이디 찾기 버튼을 눌렀을 때 보여줄 페이지
-    return render_template('find_id.html')
-
-@app.route('/find-pw')
-def find_pw_page():
-    # 비밀번호 찾기 버튼을 눌렀을 때 보여줄 페이지
-    return render_template('find_pw.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        # 회원가입 로직 (DB 저장 등) 수행
-        return redirect('/')
-    return render_template('register.html')
-
+# 2. 실시간 카메라 화면 (camera.html) 테스트
 @app.route('/camera')
-def index():
-    if 'user_id' not in session:
-        return redirect('/')
+def camera_test():
+    # 실제 영상 주소 대신 테스트용 이미지나 더미 데이터를 보낼 수 있게 설정
+    # 여기서는 camera.html 파일이 잘 렌더링 되는지 확인합니다.
     return render_template('camera.html')
 
-@app.route('/get_score')
-def get_score():
-    # 실시간 위험 점수 (테스트용 랜덤값)
-    current_score = random.randint(10, 95)
-    return jsonify({
-        "risk_score": current_score
-    })
+# 3. 사고 영상 목록 화면 (history.html) 테스트
+@app.route('/history')
+def history_test():
+    # 버튼 눌렀을 때 이 화면으로 넘어오는지 확인하기 위한 가짜 데이터
+    test_logs = [
+        {'event_time': '2026-02-26 14:00:00', 'risk_score': 95, 'video_path': '/static/test.mp4'}
+    ]
+    return render_template('history.html', logs=test_logs)
+
+# 4. 초기 접속 시 카메라 화면으로 바로 가기
+@app.route('/')
+def index():
+    return '<script>location.href="/camera"</script>'
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("🚀 [테스트 시작] 브라우저에서 http://127.0.0.1:5000 접속 후 '영상 보기' 버튼을 클릭하세요.")
+    app.run(debug=True, port=5000)

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사고 이력 조회</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='history_style.css') }}">
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/camera" class="back-btn">
+            <span class="icon">◀</span> 실시간 모니터링으로 돌아가기
+        </a>
+    </div>
+
+    <h1>🚨 사고 이력 조회</h1>
+    <hr>
+
+    <div class="log-container">
+        {% if logs %}
+            {% for log in logs %}
+            <div class="log-card" onclick="playVideo('{{ log.video_path }}')">
+                <div class="thumbnail-placeholder">▶ 영상 보기</div>
+                <h3>{{ log.event_time }}</h3>
+                <p>위험 점수: <span style="color:red;">{{ log.risk_score }}점</span></p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="padding: 20px;">기록된 사고 이력이 없습니다.</div>
+        {% endif %}
+    </div>
+
+    <div id="videoModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <video id="modalVideo" controls>
+                <source id="videoSource" src="" type="video/mp4">
+            </video>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='history.js') }}"></script>
+</body>
+</html>

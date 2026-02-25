@@ -132,3 +132,35 @@ video, img {
   transform: translate(-50%, -50%) scale(1);
   opacity: 1;
 }
+
+/* 버튼 스타일 정의 */
+.history-btn {
+    position: fixed;   /* 화면에 고정 */
+    top: 20px;         /* 위에서 20px */
+    left: 20px;        /* 왼쪽에서 20px */
+    z-index: 1000;     /* 영상보다 위에 보이도록 */
+
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: rgba(0, 0, 0, 0.6); /* 반투명 검정 */
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px); /* 배경 흐림 효과 (세련된 느낌) */
+}
+
+/* 마우스 올렸을 때 효과 */
+.history-btn:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+    transform: scale(1.05); /* 살짝 커짐 */
+    border-color: #ff4b2b;   /* 강조색 (빨간색 계열) */
+}
+
+.history-btn .icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
