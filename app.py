@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, request, redirect, session, jsonify
+from flask import Flask, Response, render_template, request, redirect, session, jsonify, url_for
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -8,14 +8,14 @@ from datetime import datetime
 import pandas as pd
 import joblib
 from scipy.signal import savgol_filter
-from playsound import playsound
 import os
-from collections import deque # 데이터 버퍼링용
+import socket # 네트워크 스캔용 추가
+from collections import deque
 
-# 분리된 DB 설정 파일에서 가져오기
+# DB 설정 가져오기
 from db_config import get_db_connection, engine
-
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -25,8 +25,8 @@ scaler = joblib.load("pkl/scaler.pkl")
 model = joblib.load("pkl/decision_tree_model.pkl")
 
 # 사비골 필터 설정 (수치 직접 입력)
-WINDOW_SIZE = 5  # 홀수여야 함
-POLY_ORDER = 2   # WINDOW_SIZE보다 작아야 함
+WINDOW_SIZE = 5
+POLY_ORDER = 2
 
 # 3. 데이터 버퍼 (사비골용)
 kp_buffer = {f'kp{i}_{axis}': deque(maxlen=WINDOW_SIZE) for i in range(33) for axis in ['x', 'y', 'z']}
@@ -74,6 +74,35 @@ if not os.path.exists(RECORD_DIR):
     os.makedirs(RECORD_DIR)
 
 is_recording = False # 중복 녹화 방지 플래그
+
+
+# ------  IP 자동 탐색 로직 ------
+def auto_discover_camera(base_url):
+    """기존 URL의 IP 대역을 스캔하여 현재 살아있는 카메라 IP를 찾음"""
+    if not base_url or "http" not in base_url:
+        return base_url
+
+    try:
+        # URL에서 IP 추출 (예: http://192.168.0.15:4747/video -> 192.168.0.15)
+        raw_ip = base_url.split("//")[1].split(":")[0]
+        ip_parts = raw_ip.split(".")
+        prefix = ".".join(ip_parts[:3])  # 192.168.0
+
+        print(f"🔍 카메라 자동 탐색 시작: {prefix}.x 대역 스캔 중...")
+
+        # 4747 포트가 열려있는 기기를 찾음
+        for i in range(2, 255):
+            target_ip = f"{prefix}.{i}"
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.05)  # 빠른 스캔을 위해 짧은 타임아웃
+                if s.connect_ex((target_ip, 4747)) == 0:
+                    new_url = f"http://{target_ip}:4747/video"
+                    print(f"✅ 카메라 발견! 새 주소: {new_url}")
+                    return new_url
+    except Exception as e:
+        print(f"⚠️ 스캔 중 오류: {e}")
+    return base_url
+
 
 def compute_center_dynamics(df, fps=30, left_pelvis='kp23', right_pelvis='kp24'):
     global prev_center, prev_center_speed
@@ -194,31 +223,40 @@ def connect_camera_loop():
     global cap, fps, current_user_id
     while True:
         if cap is not None and cap.isOpened():
-            time.sleep(1);
+            time.sleep(1)
             continue
-        url = get_camera_url(current_user_id) if current_user_id else 0
-        temp_cap = get_video_capture(url)
-        if temp_cap and temp_cap.isOpened():
-            cap = temp_cap
-            fps_v = int(cap.get(cv2.CAP_PROP_FPS))
-            fps = fps_v if fps_v > 0 else 30
+
+        if current_user_id:
+            db_url = get_camera_url(current_user_id)
+            if db_url:
+                # 1. 먼저 DB에 저장된 주소로 시도
+                temp_cap = cv2.VideoCapture(db_url)
+                if not temp_cap.isOpened():
+                    # 2. 실패 시 주변 IP 자동 탐색 (마지막 자리 변동 대응)
+                    new_url = auto_discover_camera(db_url)
+                    temp_cap = cv2.VideoCapture(new_url)
+
+                if temp_cap.isOpened():
+                    cap = temp_cap
+                    fps_v = int(cap.get(cv2.CAP_PROP_FPS))
+                    fps = fps_v if fps_v > 0 else 30
+                    print(f"🚀 카메라 연결 성공!")
+                else:
+                    print("📴 카메라를 찾을 수 없습니다. 5초 후 재시도...")
+                    time.sleep(5)
         else:
-            time.sleep(3)
+            time.sleep(2)
 
 
 def capture_frames():
     global latest_frame, cap, frame_idx, fps, latest_score, latest_label, current_user_id
     last_analysis_time = 0
-
-    # 분석 주기 설정 (0.3초 = 초당 약 3.3회 분석)
-    # 낙상은 순식간에 일어나므로 1초보다는 0.3초 내외가 적당합니다.
     ANALYSIS_INTERVAL = 0.3
 
     while True:
         if cap is None or not cap.isOpened():
             time.sleep(0.5)
             continue
-
         ret, frame = cap.read()
         if not ret:
             continue
