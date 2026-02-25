@@ -450,10 +450,11 @@ def background_register(data):
 #######################
 
 @app.route('/')
-def home():
+def index_page():
+    # 로그인 되어 있으면 바로 카메라 페이지로, 아니면 랜딩 페이지로
     if 'user_id' in session:
         return redirect(url_for('index'))
-    return render_template('login.html')
+    return render_template('index.html') # 새로운 랜딩 페이지
 
 # ------ 로그인 기능 ------
 @app.route('/login', methods=['POST'])

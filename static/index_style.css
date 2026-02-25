@@ -1,0 +1,144 @@
+/* 1. 기본 배경 및 폰트 설정 (로그인 페이지와 일치) */
+body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background-color: #f5f6fa; /* 로그인 페이지와 동일한 배경색 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* 화면 중앙 정렬 */
+    margin: 0;
+}
+
+/* 2. 중앙 컨테이너 (로그인 박스 스타일 계승) */
+.landing-container {
+    background: white;
+    padding: 35px 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 500px; /* 로그인 박스보다 아주 살짝 넓게 설정 */
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* 3. Hero 섹션 */
+.hero-section {
+    margin-bottom: 30px;
+}
+
+.hero-section h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    letter-spacing: -1px;
+}
+
+.hero-section h1 span { color: #007aff; }
+
+.hero-section p {
+    font-size: 0.95rem;
+    color: #777;
+    margin: 0;
+}
+
+/* 4. 가이드라인 섹션 (박스 내부의 은은한 배경) */
+.setup-guide-highlight {
+    background: #f8f9fc;
+    padding: 22px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.guide-header h2 {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0 0 15px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.guide-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.guide-item {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.guide-number {
+    color: #007aff;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+/* 5. 버튼 영역 (로그인 페이지와 크기 통일) */
+.main-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn-main {
+    width: 180px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary { background-color: #000; color: #fff; }
+.btn-primary:hover { background-color: #333; }
+
+.btn-outline {
+    background-color: #fff;
+    color: #007aff;
+    border: 1px solid #007aff;
+}
+.btn-outline:hover { background-color: #f0f7ff; }
+
+/* 6. 하단 링크 */
+.footer-links {
+    margin-top: 15px;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.footer-links a {
+    color: #aaa;
+    text-decoration: none;
+    margin: 0 8px;
+}
+
+/* 7. 푸터 카피라이트 (핵심 수정 부분) */
+footer {
+    text-align: center;
+    padding: 15px 0 0; /* 내부 여백 최소화 */
+    margin-top: 10px; /* 링크와의 간격 축소 */
+    color: #d2d2d7;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* 컨테이너 하단 여백도 함께 조절 */
+.landing-container {
+    padding-bottom: 25px;
+}

@@ -15,8 +15,16 @@ mock_users = [
     {'userId': 'test1234', 'username': '홍길동', 'mail': 'hong@test.com'}
 ]
 
-# 초기 화면 (로그인 페이지)
+# 초기 화면
 @app.route('/')
+def home():
+    # 이미 로그인된 사용자는 바로 카메라 대시보드로 보냄
+    if 'user_id' in session:
+        return redirect(url_for('index')) # 기존 카메라 페이지(index)
+    return render_template('index.html') # 새로운 랜딩 페이지
+
+# 로그인 페이지
+@app.route('/login')
 def login():
     return render_template('login.html') # 기존에 만드신 로그인 페이지
 

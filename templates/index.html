@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On Safe - AI 낙상 감지 시스템</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index_style.css') }}">
+
+</head>
+<body>
+    <div class="landing-container">
+        <section class="hero-section">
+            <h1><span>On</span> Safe</h1>
+            <p>당신의 소중한 가족을 지키는 가장 스마트한 방법</p>
+        </section>
+
+        <section class="setup-guide-highlight">
+            <div class="guide-header">
+                <h2>가이드라인</h2>
+            </div>
+
+            <div class="guide-list">
+                <div class="guide-item">
+                    <span class="guide-number">01</span>
+                    <div>공기계 스마트폰에 <b>'DroidCam'</b> 앱을 설치하세요.</div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-number">02</span>
+                    <div>PC와 스마트폰을 <b>동일한 와이파이</b>에 연결하세요.</div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-number">03</span>
+                    <div>앱에 표시된 <b>IP 주소</b>를 가입 시 등록하세요.</div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-number">04</span>
+                    <div><b>2m 이상의 높이</b>에 카메라를 고정하면 모든 준비가 끝납니다.</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="main-actions">
+            <a href="/login" class="btn-main btn-primary">로그인</a>
+            <a href="/register" class="btn-main btn-outline">회원가입</a>
+        </div>
+
+        <div class="footer-links">
+            <a href="/find-id">아이디 찾기</a>
+            <a href="/find-pw">비밀번호 찾기</a>
+        </div>
+
+        <footer style="text-align: center; padding: 100px 0 50px; color: #d2d2d7; font-size: 0.8rem; letter-spacing: 1px;">
+            ON SAFE AI SECURITY · 2026
+        </footer>
+    </div>
+</body>
+</html>
