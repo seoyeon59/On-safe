@@ -15,6 +15,8 @@ from collections import deque # 데이터 버퍼링용
 # 분리된 DB 설정 파일에서 가져오기
 from db_config import get_db_connection, engine
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -408,8 +410,11 @@ def background_register(data):
 #######################
 # ------ Flask ------
 #######################
+
 @app.route('/')
 def home():
+    if 'user_id' in session:
+        return redirect(url_for('index'))
     return render_template('login.html')
 
 # ------ 로그인 기능 ------
@@ -422,18 +427,23 @@ def login():
     if not user_id or not password:
         return render_template('login.html', error_msg="아이디와 비밀번호를 모두 입력해주세요.")
 
-    # DB 실제 유저 확인
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE user_id=%s AND password=%s", (user_id, password))
-            user = cursor.fetchone()
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                # 암호화된 비번을 비교하기 위해 해시값을 가져옴
+                cursor.execute("SELECT user_id, password FROM users WHERE user_id=%s", (user_id,))
+                user = cursor.fetchone()
 
-    if user:
-        session['user_id'] = user_id
-        current_user_id = user_id  # 분석 스레드에서 사용할 전역 변수 업데이트
-        return redirect('/camera')
-
-    return render_template('login.html', error_msg="아이디 또는 비밀번호가 일치하지 않습니다.")
+        # check_password_hash로 암호화된 비번과 입력값 비교
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user_id
+            current_user_id = user_id
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error_msg="아이디 또는 비밀번호가 일치하지 않습니다.")
+    except Exception as e:
+        print(f"로그인 처리 오류: {e}")
+        return render_template('login.html', error_msg="서버 오류가 발생했습니다.")
 
 
 # ------ 기타 안내 페이지 -------
@@ -441,30 +451,90 @@ def login():
 def support():
     return render_template('support.html')
 
-@app.route('/find-id')
-def find_id_page():
-    return render_template('find_id.html')
 
-@app.route('/find-pw')
-def find_pw_page():
-    return render_template('find_pw.html')
+# ------ 아이디 찾기 API ------
+@app.route('/api/find-id')
+def api_find_id():
+    name = request.args.get('name')
+    email = request.args.get('email')
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT user_id FROM users WHERE guardian_name = %s AND email = %s"
+                cursor.execute(sql, (name, email))
+                user = cursor.fetchone()
+        if user:
+            return jsonify({'success': True, 'user_id': user['user_id']})
+        return jsonify({'success': False})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
-# ------ 회원가입 기능 ------
+# ------ 비밀번호 재설정 관련 API ------
+@app.route('/api/verify-for-pw')
+def api_verify_pw():
+    user_id = request.args.get('id')
+    email = request.args.get('email')
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT user_id FROM users WHERE user_id = %s AND email = %s"
+                cursor.execute(sql, (user_id, email))
+                user = cursor.fetchone()
+        if user:
+            # 실제 사업화 시 여기서 이메일 발송 로직 추가
+            return jsonify({'success': True})
+        return jsonify({'success': False})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/update-pw', methods=['POST'])
+def api_update_pw():
+    data = request.json
+    user_id = data.get('id')
+    new_pw = data.get('new_pw')
+
+    # 새 비밀번호 암호화
+    hashed_pw = generate_password_hash(new_pw)
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "UPDATE users SET password = %s WHERE user_id = %s"
+                cursor.execute(sql, (hashed_pw, user_id))
+            conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+# ------ 회원가입 기능 (비밀번호 암호화 저장) ------
+def background_register(data):
+    try:
+        # 사업화 필수: 비밀번호 해싱
+        hashed_password = generate_password_hash(data['password'])
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = """INSERT INTO users 
+                         (user_id, password, guardian_name, guardian_phone, ward_name, email, camera_url) 
+                         VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+                cursor.execute(sql, (
+                    data['id'], hashed_password, data['username'], data['phone_number'],
+                    data['non_guardian_name'], data['mail'], data['camera_url']
+                ))
+            conn.commit()
+            print(f"✅ DB 가입 완료 (암호화 적용): {data['id']}")
+    except Exception as e:
+        print(f"❌ 가입 오류: {e}")
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # 1. 폼 데이터 받기
-        f = request.form.to_dict()  # 스레드로 넘기기 위해 딕셔너리로 변환
-
-        # 2. DB 저장은 백그라운드 스레드에 맡기기 (기다리지 않음)
-        thread = threading.Thread(target=background_register, args=(f,))
-        thread.start()
-
-        # 3. DB 작업과 상관없이 즉시 로그인 페이지로 리다이렉트
-        print(f"🚀 가입 요청 접수, 즉시 리다이렉트: {f['id']}")
+        f = request.form.to_dict()
+        threading.Thread(target=background_register, args=(f,)).start()
         return redirect('/')
-
     return render_template('register.html')
 
 
@@ -476,6 +546,15 @@ def check_id():
         with conn.cursor() as cursor:
             cursor.execute("SELECT user_id FROM users WHERE user_id = %s", (u_id,))
             return jsonify({"exists": cursor.fetchone() is not None})
+
+
+# ------ 로그아웃 ------
+@app.route('/logout')
+def logout():
+    session.clear()
+    global current_user_id
+    current_user_id = None
+    return redirect('/')
 
 
 # ------ 메인 카메라 페이지 ------
