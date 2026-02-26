@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>실시간 낙상 감지 시스템</title>
+  <title>On Safe - 실시간 모니터링</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='camera_style.css') }}">
 </head>
 
-
 <body>
   <a href="/history" class="history-btn">
-    <span class="icon">📁</span> 사고 영상 보기
+    <span class="icon">📁</span> 사고 영상 이력
   </a>
+
   <div class="container">
     <h1>🚨 실시간 낙상 감지 시스템</h1>
 
     <div class="main-content">
       <div class="video-section">
         <div class="video-container">
-          <video id="webcam" autoplay playsinline></video>
+          <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="실시간 스트리밍">
         </div>
-        <div id="status" class="status">카메라 연결 확인 중...</div>
+        <div id="status" class="status">✅ 시스템 모니터링 중</div>
       </div>
 
       <div class="score-section">
@@ -29,15 +29,15 @@
         <div class="risk-bar">
           <div class="arrow" id="arrow"></div>
         </div>
-        <button id="btn119">🚨 119 신고</button>
+        <button id="btn119">🚨 119 즉시 신고</button>
       </div>
     </div>
 
     <div id="popup" class="popup-card">
-      <p>119에 신고하시겠습니까?<br>모바일에서는 전화 연결이 됩니다.</p>
-      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-        <button id="confirmBtn" style="background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">확인</button>
-        <button id="cancelBtn" style="background:#ccc; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">취소</button>
+      <p>119에 신고하시겠습니까?<br><small>모바일에서는 전화로 연결됩니다.</small></p>
+      <div class="popup-buttons">
+        <button id="confirmBtn" class="btn-confirm">확인</button>
+        <button id="cancelBtn" class="btn-cancel">취소</button>
       </div>
     </div>
   </div>

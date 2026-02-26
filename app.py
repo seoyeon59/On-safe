@@ -251,33 +251,36 @@ def connect_camera_loop():
 def capture_frames():
     global latest_frame, cap, frame_idx, fps, latest_score, latest_label, current_user_id
     last_analysis_time = 0
-    ANALYSIS_INTERVAL = 0.3
+    # 0.5초마다 분석하도록 간격 설정
+    ANALYSIS_INTERVAL = 0.5
 
     while True:
         if cap is None or not cap.isOpened():
-            time.sleep(0.5)
+            time.sleep(0.2)
             continue
+
         ret, frame = cap.read()
         if not ret:
             continue
 
-        # 1. UI 및 스트리밍용 최신 프레임 업데이트
+        # 1. UI 스트리밍용 최신 프레임 업데이트 (원본 유지)
         with frame_lock:
             latest_frame = frame.copy()
             frame_idx += 1
 
         cur_t = time.time()
 
-        # 2. 정해진 분석 주기마다 실행
+        # 정확히 0.5초가 지났을 때만 MediaPipe 분석 수행
         if cur_t - last_analysis_time >= ANALYSIS_INTERVAL:
             last_analysis_time = cur_t
 
-            # Mediapipe 처리를 위한 리사이징 및 RGB 변환
-            rgb = cv2.cvtColor(cv2.resize(frame, (640, 480)), cv2.COLOR_BGR2RGB)
-            res = pose.process(rgb)
+            # [파일 저장 없이 메모리 직접 분석]
+            # MediaPipe 처리를 위해 BGR을 RGB로만 변환
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            res = pose.process(rgb_frame)
 
             if res.pose_landmarks:
-                # 데이터 추출
+                # 데이터 추출 로직
                 raw_row = {'frame': frame_idx}
                 for i, lm in enumerate(res.pose_landmarks.landmark):
                     raw_row[f'kp{i}_x'], raw_row[f'kp{i}_y'], raw_row[f'kp{i}_z'] = lm.x, lm.y, lm.z
@@ -287,6 +290,7 @@ def capture_frames():
                 df = pd.DataFrame([smoothed_row])
 
                 # [Step 2] 데이터 가공 (중심점 역학, 정규화, 각도 계산)
+                # fps 인자를 1로 전달하거나 실제 fps를 써서 1초당 변화량을 계산합니다.
                 c_info = compute_center_dynamics(df, fps=fps).iloc[-1].to_dict()
                 df_processed = scale_normalize_kp(centralize_kp(df))
                 calc = calculate_angles(df_processed.iloc[0].to_dict(), fps=fps)
@@ -295,40 +299,39 @@ def capture_frames():
                 # [Step 3] AI 모델 예측
                 if model and scaler:
                     try:
-                        # 모델 학습 시 사용했던 특성(Angle, Center 관련) 추출
                         feat = [col for col in calc.keys() if any(x in col.lower() for x in ["angle", "center"])]
                         X = pd.DataFrame([calc])[feat].reindex(columns=scaler.feature_names_in_, fill_value=0.0)
-
                         X_scaled = scaler.transform(X)
-                        prob = model.predict_proba(X_scaled)
 
-                        latest_score = float(prob[0][1] * 100)  # 낙상 확률(%)
+                        prob = model.predict_proba(X_scaled)
+                        latest_score = float(prob[0][1] * 100)
                         latest_label = "Fall" if model.predict(X_scaled)[0] == 1 else "Normal"
 
-                        # 계산된 결과값 반영
                         calc["risk_score"] = latest_score
-                        # 참고: DB 스키마에 Label 컬럼이 없다면 calc에서는 제외하고 전역변수만 업데이트합니다.
-                        latest_label = latest_label
-
                     except Exception as e:
                         print(f"⚠️ AI 예측 오류: {e}")
 
-                # [Step 4] 통합된 DB 저장 함수 호출
-                # 여기서 realtime_screen 저장 + 80점 이상 시 녹화 스레드 실행이 동시에 처리됩니다.
+                # [Step 4] DB 저장
                 if current_user_id:
                     save_realtime_data(current_user_id, calc)
 
-        # CPU 점유율 조절 (카메라 FPS에 맞춤)
-        time.sleep(1 / fps if fps > 0 else 0.03)
+        # 시스템 부하 방지를 위한 미세 대기
+        time.sleep(0.01)
 
 
 def gen_frames():
     while True:
         with frame_lock:
-            f = latest_frame.copy() if latest_frame is not None else np.zeros((480, 640, 3), np.uint8)
-        _, buf = cv2.imencode('.jpg', f)
+            if latest_frame is not None:
+                # 640x480으로 크기 조절 (브라우저 부하 감소 핵심)
+                f = cv2.resize(latest_frame, (640, 480))
+            else:
+                f = np.zeros((480, 640, 3), np.uint8)
+
+        # JPEG 품질을 70으로 설정하여 데이터량 축소
+        _, buf = cv2.imencode('.jpg', f, [cv2.IMWRITE_JPEG_QUALITY, 70])
         yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
-        time.sleep(0.01)
+        time.sleep(0.03)  # 초당 약 30프레임 정도로 제한
 
 
 # 특정 점수(80) 이상일 때 영상을 녹화하고 detection_logs 테이블에 저장
@@ -444,6 +447,7 @@ def background_register(data):
             print(f"✅ DB 가입 완료: {data['id']}")
     except Exception as e:
         print(f"❌ 백그라운드 가입 오류: {e}")
+
 
 #######################
 # ------ Flask ------
