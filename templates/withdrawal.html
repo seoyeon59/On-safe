@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On Safe - 회원 탈퇴</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='withdrawal_style.css') }}">
+</head>
+<body>
+    <div class="withdrawal-container">
+        <div class="header">
+            <h1>회원 탈퇴</h1>
+            <p>그동안 <span>On Safe</span>를 이용해 주셔서 감사합니다.<br>탈퇴하시는 사유를 알려주시면 서비스 개선에 큰 도움이 됩니다.</p>
+        </div>
+
+        <form id="withdrawalForm" action="/api/withdraw" method="POST">
+            <div class="reason-section">
+                <h3>탈퇴 사유 (필수)</h3>
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="reason_type" value="서비스 불만족" required>
+                        <span>시스템 및 서비스 불만족</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="reason_type" value="UI/UX 불편">
+                        <span>화면 디자인 및 사용 방법이 어려움</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="reason_type" value="잦은 오류">
+                        <span>낙상 감지 오류 및 시스템 불안정</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="reason_type" value="기타">
+                        <span>기타 (직접 입력)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>상세 내용 (선택)</h3>
+                <textarea name="detailed_reason" placeholder="더 나은 On Safe가 될 수 있도록 구체적인 의견을 남겨주세요."></textarea>
+            </div>
+
+            <div class="warning-box">
+                <p>⚠️ <strong>주의사항</strong></p>
+                <ul>
+                    <li>탈퇴 시 귀하의 모든 개인정보는 즉시 삭제됩니다.</li>
+                    <li>기존의 사고 기록(History) 데이터는 복구가 불가능합니다.</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/camera" class="btn-back">취소하기</a>
+                <button type="submit" class="btn-submit">탈퇴하기</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

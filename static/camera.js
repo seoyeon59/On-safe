@@ -53,3 +53,18 @@ window.addEventListener("DOMContentLoaded", () => {
   // 실행: 1초 간격으로 점수 갱신
   setInterval(fetchRiskScore, 1000);
 });
+
+// camera.js 하단에 추가
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsDropdown = document.getElementById("settingsDropdown");
+
+// 버튼 클릭 시 메뉴 토글
+settingsBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // 부모로 이벤트 전달 방지
+    settingsDropdown.classList.toggle("show");
+});
+
+// 화면 다른 곳 클릭 시 메뉴 닫기
+window.addEventListener("click", () => {
+    settingsDropdown.classList.remove("show");
+});
