@@ -676,6 +676,63 @@ def history():
     # 3. 조회된 로그 데이터를 history.html 템플릿으로 전달
     return render_template('history.html', logs=logs)
 
+
+# ------ 회원 탈퇴 페이지 ------
+@app.route('/withdrawal')
+def withdrawal_page():
+    # 로그인이 안 되어 있으면 탈퇴를 못 하게 로그인 페이지로 리다이렉트
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('withdrawal.html')
+
+# 회원 탈퇴 데이터 처리 API
+@app.route('/api/withdraw', methods=['POST'])
+def api_withdraw():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 403
+
+    user_id = session.get('user_id')
+
+    # HTML 폼에서 보낸 탈퇴 사유 수집
+    reason_type = request.form.get('reason_type')
+    detailed_reason = request.form.get('detailed_reason', '')
+
+    try:
+        # DB에 탈퇴 사유 기록 (SQL 실행 부분)
+        """
+        sql_reason = "INSERT INTO withdrawal_reasons (reason_type, detailed_reason) VALUES (%s, %s)"
+        db.execute(sql_reason, (reason_type, detailed_reason))
+
+        sql_delete = "DELETE FROM users WHERE user_id = %s"
+        db.execute(sql_delete, (user_id,))
+        db.commit()
+        """
+
+        print(f"📉 [사유 기록 성공] 유형: {reason_type} | 내용: {detailed_reason}")
+        print(f"🗑️ [회원 삭제 성공] ID: {user_id}")
+
+        # 모든 세션 정보 삭제 (로그아웃 처리)
+        session.clear()
+
+        # 사용자에게 알림을 주고 홈으로 이동 (JS 활용)
+        return """
+            <script>
+                alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+                window.location.href = '/';
+            </script>
+        """
+
+    except Exception as e:
+        print(f"❌ 탈퇴 처리 오류: {e}")
+        # 오류 발생 시 사용자에게 알림
+        return """
+            <script>
+                alert('처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                history.back();
+            </script>
+        """
+
+
 # ==========================
 # 서버 실행
 # ==========================
